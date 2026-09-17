@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/pulse/pulse/internal/engine/metrics"
 )
 
 // Local 是 MVP 阶段的压测引擎实现
@@ -24,7 +26,7 @@ type Local struct {
 	client    *http.Client
 	resolver  *VariableResolver
 	limiter   RateLimiter
-	collector *Collector
+	collector *metrics.Collector
 
 	// Channels
 	metricsCh chan *MetricSnapshot
@@ -86,7 +88,7 @@ func (l *Local) Start(ctx context.Context, run *Run) error {
 
 	// 准备限流器
 	targetRPS := run.Scenario.Load.TargetRPS
-	if run.Runtime != nil && run.Runtime.TargetRPS > 0 {
+	if run.Runtime.TargetRPS > 0 {
 		targetRPS = run.Runtime.TargetRPS
 	}
 	if targetRPS > 0 {
@@ -94,12 +96,12 @@ func (l *Local) Start(ctx context.Context, run *Run) error {
 	}
 
 	// 准备 Collector
-	l.collector = NewCollector(10)
+	l.collector = metrics.NewCollector(10)
 
 	// 准备 Scheduler
 	vus := run.Scenario.Load.VUs
 	duration2 := run.Scenario.Load.Duration
-	if run.Runtime != nil {
+	if true {
 		if run.Runtime.VUs > 0 {
 			vus = run.Runtime.VUs
 		}

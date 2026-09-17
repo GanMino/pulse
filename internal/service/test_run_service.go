@@ -65,7 +65,7 @@ func (s *TestRunService) ListByScenario(ctx context.Context, scenarioID int64, l
 
 	items := make([]TestRunDTO, 0, len(runs))
 	for _, r := range runs {
-		items = append(items, s.toDTO(r, scenarioName))
+		items = append(items, s.ToDTO(r, scenarioName))
 	}
 	return items, nil
 }
@@ -75,7 +75,7 @@ func (s *TestRunService) ListAll(ctx context.Context, limit int) ([]TestRunDTO, 
 	if limit <= 0 {
 		limit = 50
 	}
-	runs, total, err := s.testRunRepo.List(ctx, RunListOptions{Limit: limit})
+	runs, total, err := s.testRunRepo.List(ctx, sqlite.RunListOptions{Limit: limit})
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (s *TestRunService) ListAll(ctx context.Context, limit int) ([]TestRunDTO, 
 		if sc, _ := s.scenarioRepo.GetByID(ctx, r.ScenarioID); sc != nil {
 			scenarioName = sc.Name
 		}
-		items = append(items, s.toDTO(r, scenarioName))
+		items = append(items, s.ToDTO(r, scenarioName))
 	}
 	_ = total
 	return items, nil
@@ -102,7 +102,7 @@ type RunListOptions struct {
 }
 
 // toDTO 转换为 DTO
-func (s *TestRunService) toDTO(r *model.TestRun, scenarioName string) TestRunDTO {
+func (s *TestRunService) ToDTO(r *model.TestRun, scenarioName string) TestRunDTO {
 	dto := TestRunDTO{
 		ID:           r.ID,
 		UUID:         r.UUID,

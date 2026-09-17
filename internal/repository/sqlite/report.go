@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/pulse/pulse/internal/model"
@@ -96,7 +97,7 @@ func (r *ReportRepository) Delete(ctx context.Context, id int64) error {
 // DeleteOlderThan 删除指定天数之前的报告
 func (r *ReportRepository) DeleteOlderThan(ctx context.Context, days int) (int64, error) {
 	result := r.db.WithContext(ctx).
-		Where("created_at < datetime('now', ?)", "-"+days+" days").
+		Where(fmt.Sprintf("created_at < datetime('now', '-%d days')", days)).
 		Delete(&model.Report{})
 	return result.RowsAffected, result.Error
 }

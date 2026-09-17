@@ -245,7 +245,8 @@ func (a *App) GetRun(runID int64) (*service.TestRunDTO, error) {
 	if scenario != nil {
 		scenarioName = scenario.Name
 	}
-	return a.svc.TestRunService.toDTO(run, scenarioName), nil
+	dto := a.svc.TestRunService.ToDTO(run, scenarioName)
+	return &dto, nil
 }
 
 // IsRunActive 检查 run 是否在活跃列表

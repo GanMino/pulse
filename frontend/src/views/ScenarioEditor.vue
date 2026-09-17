@@ -15,8 +15,6 @@ import {
   type RequestEditor,
   type VariableEntry,
 } from '@/types/scenario'
-import RequestEditor from '@/components/RequestEditor.vue'
-import KeyValueEditor from '@/components/KeyValueEditor.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -388,7 +386,7 @@ const activeRequest = computed(() => data.value.requests[activeRequestIdx.value]
             <button @click="addVariable" class="sidebar-add-btn">+ 添加</button>
           </div>
           <div v-if="data.variables.length === 0" class="sidebar-empty">
-            暂无变量。在请求中使用 <code>{{ '{{name}}' }}</code> 占位符。
+            暂无变量。在请求中使用 <code>&#123;&#123;name&#125;&#125;</code> 占位符。
           </div>
           <KeyValueEditor
             v-else

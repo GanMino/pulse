@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/pulse/pulse/internal/engine/metrics"
 )
 
 // VU 是单个虚拟用户(协程)的执行循环
@@ -18,7 +20,7 @@ type VU struct {
 	client    *http.Client
 	resolver  *VariableResolver
 	limiter   RateLimiter
-	collector *Collector
+	collector *metrics.Collector
 	paused    func() bool
 }
 
@@ -29,7 +31,7 @@ func NewVU(
 	client *http.Client,
 	resolver *VariableResolver,
 	limiter RateLimiter,
-	collector *Collector,
+	collector *metrics.Collector,
 	pausedCheck func() bool,
 ) *VU {
 	return &VU{

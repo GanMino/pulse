@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -57,8 +58,8 @@ func NewRunService(
 
 // StartRunRequest 启动测试请求
 type StartRunRequest struct {
-	ScenarioID int64                  `json:"scenarioId"`
-	Runtime    *RuntimeConfig         `json:"runtime,omitempty"` // 可选运行时覆盖
+	ScenarioID int64               `json:"scenarioId"`
+	Runtime    *model.RuntimeConfig `json:"runtime,omitempty"` // 可选运行时覆盖
 }
 
 // StartRunResponse 启动测试响应
@@ -250,7 +251,7 @@ func (s *RunService) waitForCompletion(runID int64) {
 			MaxMs:         summary.LatencyMs.Max,
 			AvgMs:         summary.LatencyMs.Avg,
 			StatusCodes:   summary.StatusCodes,
-			PerRequest:    convertPerRequestToRequestStats(summary.PerRequest),
+			RequestStats:  convertPerRequestToRequestStats(summary.PerRequest),
 		}
 	}
 
@@ -401,36 +402,35 @@ func (s *RunService) GetActiveEngine(runID int64) (engine.Engine, bool) {
 }
 
 // convertScenario 将 model.Scenario 转换为 engine.Scenario
-func (s *RunService) convertScenario(s *model.Scenario) engine.Scenario {
+func (rs *RunService) convertScenario(scn *model.Scenario) engine.Scenario {
 	result := engine.Scenario{
-		ID:   s.ID,
-		Name: s.Name,
+		ID:   scn.ID,
+		Name: scn.Name,
 		Load: engine.LoadConfig{
-			VUs:       s.Config.Load.VUs,
-			Duration:  parseDuration(s.Config.Load.Duration),
-			TargetRPS: s.Config.Load.TargetRPS,
-			ThinkTime: parseDuration(s.Config.Load.ThinkTime),
+			VUs:       scn.Config.Load.VUs,
+			Duration:  parseDuration(scn.Config.Load.Duration),
+			TargetRPS: scn.Config.Load.TargetRPS,
+			ThinkTime: parseDuration(scn.Config.Load.ThinkTime),
 		},
-		Vars: s.Config.Variables,
+		Vars: convertVariables(scn.Config.Variables),
 	}
 
-	if s.Config.Load.RampUp != nil {
+	if scn.Config.Load.RampUp != nil {
 		result.Load.RampUp = &engine.RampUp{
-			Type:     s.Config.Load.RampUp.Type,
-			Duration: parseDuration(s.Config.Load.RampUp.Duration),
-			Steps:    s.Config.Load.RampUp.Steps,
+			Type:     scn.Config.Load.RampUp.Type,
+			Duration: parseDuration(scn.Config.Load.RampUp.Duration),
+			Steps:    scn.Config.Load.RampUp.Steps,
 		}
 	}
 
 	// 转换请求
-	for _, r := range s.Config.Requests {
+	for _, r := range scn.Config.Requests {
 		req := engine.Request{
-			Name:    r.Name,
-			Method:  r.Method,
-			URL:     r.URL,
-			Headers: r.Headers,
-			Body:    r.Body,
-			BodyType: "json",
+			Name:       r.Name,
+			Method:     r.Method,
+			URL:        r.URL,
+			Headers:    r.Headers,
+			BodyType:   "json",
 			Extractors: r.Extractors,
 			Assertions: engine.Assertions{
 				Status:       r.Assertions.Status,
@@ -440,11 +440,15 @@ func (s *RunService) convertScenario(s *model.Scenario) engine.Scenario {
 			ThinkTime: parseDuration(r.ThinkTime),
 			Weight:    r.Weight,
 		}
+		// Body 是 map,序列化为 JSON 字节
+		if len(r.Body) > 0 {
+			if b, err := json.Marshal(r.Body); err == nil {
+				req.Body = b
+			}
+		}
 		if r.BodyRaw != "" {
 			req.BodyType = "raw"
-			req.Body = nil
-			// BodyRaw 通过 Headers 或 Body 传递,简化:MVP 中将 bodyRaw 序列化为 JSON 字符串
-			req.Body = map[string]interface{}{"_raw": r.BodyRaw}
+			req.BodyRaw = r.BodyRaw
 		}
 		result.Requests = append(result.Requests, req)
 	}
@@ -466,3 +470,27 @@ func parseDuration(s string) time.Duration {
 
 // 编译期检查
 var _ = gorm.ErrRecordNotFound
+// convertVariables 将 model.VariableValue 映射转换为 engine 的 map[string][]string
+func convertVariables(vars map[string]model.VariableValue) map[string][]string {
+	if vars == nil {
+		return nil
+	}
+	result := make(map[string][]string, len(vars))
+	for k, v := range vars {
+		switch val := v.Value.(type) {
+		case string:
+			result[k] = []string{val}
+		case []string:
+			result[k] = val
+		case []interface{}:
+			strs := make([]string, 0, len(val))
+			for _, item := range val {
+				strs = append(strs, fmt.Sprintf("%v", item))
+			}
+			result[k] = strs
+		default:
+			result[k] = []string{fmt.Sprintf("%v", val)}
+		}
+	}
+	return result
+}

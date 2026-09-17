@@ -62,6 +62,7 @@ type RunSummary struct {
 	TotalRequests   int64                  `json:"totalRequests"`
 	TotalErrors     int64                  `json:"totalErrors"`
 	ErrorRate       float64                `json:"errorRate"`
+	DurationMs      int64                  `json:"durationMs"`
 	AvgRPS          float64                `json:"avgRPS"`
 	PeakRPS         float64                `json:"peakRPS"`
 	P50Ms           float64                `json:"p50Ms"`

@@ -4,20 +4,19 @@ package logger
 import (
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
 )
 
-// Logger 是 zerolog.Logger 的薄封装,提供 Pulse 统一的日志接口
+// Logger 是 zerolog.Logger 的别名
 type Logger = zerolog.Logger
 
 // New 创建一个新的 Logger,输出到 stdout 和日志文件
 func New() *Logger {
-	// 设置时间格式
 	zerolog.TimeFieldFormat = time.RFC3339
 
-	// 创建多输出(stdout + 文件)
 	logDir := getLogDir()
 	_ = os.MkdirAll(logDir, 0o755)
 	file, err := os.OpenFile(
@@ -26,7 +25,6 @@ func New() *Logger {
 		0o644,
 	)
 	if err != nil {
-		// fallback 到 stdout
 		return newConsoleLogger(os.Stdout)
 	}
 
@@ -36,10 +34,16 @@ func New() *Logger {
 // newConsoleLogger 创建带颜色的控制台日志
 func newConsoleLogger(w io.Writer) *Logger {
 	consoleWriter := zerolog.ConsoleWriter{
-		Out:        w,
-		TimeFormat: time.RFC3339,
+		Out: w,
+		FormatTimestamp: func(i interface{}) string {
+			return time.Now().Format(time.RFC3339)
+		},
+		FormatLevel: func(i interface{}) string {
+			return "[" + strings.ToUpper(i.(string)) + "]"
+		},
 	}
-	return zerolog.New(consoleWriter).With().Timestamp().Logger()
+	logger := zerolog.New(consoleWriter).With().Timestamp().Logger()
+	return &logger
 }
 
 // getLogDir 获取日志目录
@@ -47,7 +51,6 @@ func getLogDir() string {
 	if dir := os.Getenv("PULSE_LOG_DIR"); dir != "" {
 		return dir
 	}
-	// 默认:~/.pulse/logs
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "/tmp/pulse/logs"

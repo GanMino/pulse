@@ -206,7 +206,7 @@ func (h *HAR) ToScenario(opts ConvertOptions) *model.ScenarioConfig {
 	seen := make(map[string]bool)
 	requestIndex := 0
 
-	for i, entry := range h.Log.Entries {
+	for _, entry := range h.Log.Entries {
 		req := entry.Request
 
 		// URL 处理:提取 base

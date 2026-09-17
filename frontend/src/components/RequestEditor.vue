@@ -180,7 +180,7 @@ function removeBodyContains(idx: number) {
           ⚠️ {{ jsonError }}
         </div>
         <div v-else class="req-hint">
-          支持变量占位符: <code>{{ '{{user}}' }}</code> <code>{{ '{{token}}' }}</code>
+          支持变量占位符: <code>&#123;&#123;user&#125;&#125;</code> <code>&#123;&#123;token&#125;&#125;</code>
         </div>
       </div>
 
@@ -199,7 +199,7 @@ function removeBodyContains(idx: number) {
     <div class="req-section">
       <div class="req-section-header">
         <span>Extractors</span>
-        <span class="req-section-hint">从响应中提取变量(后续请求可用 <code>{{ '{{name}}' }}</code>)</span>
+        <span class="req-section-hint">从响应中提取变量(后续请求可用 <code>&#123;&#123;name&#125;&#125;</code>)</span>
       </div>
       <KeyValueEditor
         :model-value="request.extractors"

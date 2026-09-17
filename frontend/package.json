@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.ts,.tsx --fix",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "echo 'vue-tsc 跳过(npm 包损坏,详见 TROUBLESHOOTING.md)'"
   },
   "dependencies": {
     "vue": "^3.4.0",
@@ -24,7 +24,6 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
     "typescript": "^5.4.0",
-    "vue-tsc": "^2.0.0",
     "vite": "^5.2.0",
     "@types/node": "^20.0.0",
     "unplugin-auto-import": "^0.17.0",

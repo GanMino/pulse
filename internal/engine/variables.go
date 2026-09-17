@@ -48,7 +48,7 @@ func (r *VariableResolver) Substitute(input string, localVars map[string]string)
 			return vs[rand.Intn(len(vs))]
 		}
 
-		iffirstErr == nil {
+		if firstErr == nil {
 			firstErr = fmt.Errorf("variable %q not found", name)
 		}
 		return match // 保留原样

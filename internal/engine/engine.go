@@ -71,6 +71,7 @@ type Request struct {
 	URL        string
 	Headers    map[string]string
 	Body       []byte
+	BodyRaw    string
 	BodyType   string // json / form / raw
 	Extractors map[string]string
 	Assertions Assertions
