@@ -215,6 +215,9 @@ header "  ⏹  停止: Ctrl+C"
 header ""
 
 # 启动(会打开窗口)
-# 关键:设置 CGO + external linker,确保应用二进制也生成 LC_UUID
+# 关键:设置 CGO + external linker,确保 wails 内部编译的二进制
+# (wailsbindings 和应用本身)都生成 LC_UUID
+# Go 1.22 的 internal linker 在 macOS 上不生成 LC_UUID,导致 dyld 报错
 export CGO_ENABLED=1
+export GOFLAGS="-ldflags=-linkmode=external"
 wails dev
