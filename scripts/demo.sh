@@ -109,9 +109,21 @@ fi
 
 if ! command -v wails &> /dev/null; then
     warn "Wails CLI 未安装,尝试自动安装..."
-    go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.1 || error "Wails 安装失败"
+    # 关键:-linkmode=external 使用 clang 链接,生成 LC_UUID
+    # 否则 macOS 会报 "missing LC_UUID load command" 错误
+    CGO_ENABLED=1 go install -trimpath -ldflags="-s -w -linkmode=external" github.com/wailsapp/wails/v2/cmd/wails@v2.10.1 || error "Wails 安装失败"
     export PATH=$PATH:$(go env GOPATH)/bin
     success "Wails 已安装"
+fi
+
+# 修复已安装但缺 LC_UUID 的 wails(旧编译产物)
+if command -v wails &> /dev/null; then
+    if ! wails version &> /dev/null 2>&1; then
+        warn "检测到 wails 缺少 LC_UUID,重新编译..."
+        CGO_ENABLED=1 go install -trimpath -ldflags="-s -w -linkmode=external" github.com/wailsapp/wails/v2/cmd/wails@v2.10.1 || error "Wails 重新编译失败"
+        export PATH=$PATH:$(go env GOPATH)/bin
+        success "Wails 已修复"
+    fi
 fi
 WAILS_VERSION=$(wails version 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 success "Wails $WAILS_VERSION ✓"
@@ -203,4 +215,6 @@ header "  ⏹  停止: Ctrl+C"
 header ""
 
 # 启动(会打开窗口)
+# 关键:设置 CGO + external linker,确保应用二进制也生成 LC_UUID
+export CGO_ENABLED=1
 wails dev
