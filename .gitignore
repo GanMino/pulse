@@ -127,12 +127,12 @@ site/
 # ============================================
 
 # Wails 自动生成的 JS 绑定 - 由 wails dev/build 自动生成
-# 但保留占位文件(stub),方便首次 clone 后能直接 pnpm install
-# wails dev 时会自动覆盖
-frontend/wailsjs/runtime/runtime.js
-frontend/wailsjs/go/
+# 整个 wailsjs 目录都忽略(wailsbindings 每次构建都会重新生成)
+frontend/wailsjs/
 # 但保留 README(说明文档)
 !frontend/wailsjs/README.md
+# wails 生成的前端依赖校验文件
+frontend/package.json.md5
 
 # 备份
 *.bak

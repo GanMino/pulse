@@ -23,6 +23,46 @@ error() { echo -e "${RED}[✗]${NC} $1"; exit 1; }
 header() { echo -e "${CYAN}$1${NC}"; }
 
 # ==========================================
+# Go wrapper:编译后自动重新签名
+# 解决 Go 1.22 external linker 生成的 adhoc 签名无效问题
+# 导致 macOS dyld 报 "Code Signature Invalid" / SIGKILL
+# ==========================================
+setup_go_wrapper() {
+    local go_bin="${1:-/usr/local/go/bin/go}"
+    local wrapper_dir="$(mktemp -d)"
+
+    cat > "$wrapper_dir/go" << 'WRAPPER_EOF'
+#!/bin/bash
+# Pulse 专用 go wrapper:编译后自动重新签名
+OUT=""
+args=("$@")
+for i in "${!args[@]}"; do
+    if [ "${args[$i]}" = "-o" ] && [ -n "${args[$((i+1))]}" ]; then
+        OUT="${args[$((i+1))]}"; break
+    elif [[ "${args[$i]}" == "-o="* ]]; then
+        OUT="${args[$i]#-o=}"; break
+    elif [[ "${args[$i]}" == -o* ]] && [ "${args[$i]}" != "-o" ]; then
+        OUT="${args[$i]#-o}"; break
+    fi
+done
+
+REAL_GO_BIN_PLACEHOLDER "$@"
+GO_EXIT=$?
+
+if [ $GO_EXIT -eq 0 ] && [ -n "$OUT" ] && [ -e "$OUT" ]; then
+    codesign --force --deep --sign - "$OUT" 2>/dev/null
+fi
+exit $GO_EXIT
+WRAPPER_EOF
+
+    # 替换真正的 go 路径
+    sed -i '' "s|REAL_GO_BIN_PLACEHOLDER|$go_bin|" "$wrapper_dir/go"
+    chmod +x "$wrapper_dir/go"
+    export PATH="$wrapper_dir:$PATH"
+    success "Go wrapper 已设置(编译后自动重新签名)"
+}
+
+# ==========================================
 # 网络优化:配置 Go 模块代理
 # 国内用户: goproxy.cn 可用
 # 海外用户: proxy.golang.org 可用
@@ -215,9 +255,15 @@ header "  ⏹  停止: Ctrl+C"
 header ""
 
 # 启动(会打开窗口)
-# 关键:设置 CGO + external linker,确保 wails 内部编译的二进制
-# (wailsbindings 和应用本身)都生成 LC_UUID
-# Go 1.22 的 internal linker 在 macOS 上不生成 LC_UUID,导致 dyld 报错
+# 关键修复:Go 1.22 在 macOS 上有两个已知问题:
+# 1. internal linker 不生成 LC_UUID → dyld 报 "missing LC_UUID"
+# 2. external linker 生成的 adhoc 签名无效 → dyld 报 "Code Signature Invalid"
+# 解决:-linkmode=external 生成 LC_UUID + go wrapper 编译后自动重新签名
 export CGO_ENABLED=1
 export GOFLAGS="-ldflags=-linkmode=external"
+
+# 设置 go wrapper(编译后自动 codesign 重新签名)
+GO_BIN="$(command -v go)"
+setup_go_wrapper "$GO_BIN"
+
 wails dev
