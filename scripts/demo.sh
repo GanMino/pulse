@@ -136,10 +136,22 @@ else
 fi
 
 cd frontend
-if [ ! -d "node_modules" ]; then
-    pnpm install
+if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+    # 配置 pnpm registry(国内优先,加快下载)
+    pnpm config set registry https://registry.npmmirror.com 2>/dev/null || true
+    pnpm config set network-timeout 300000 2>/dev/null || true  # 5 分钟超时
+    pnpm config set fetch-retries 3 2>/dev/null || true
+
+    info "使用 registry: $(pnpm config get registry)"
+
+    if pnpm install --reporter=default 2>&1 | tee /tmp/pulse-pnpm-install.log; then
+        success "前端依赖 ✓"
+    else
+        error "前端依赖安装失败。日志:/tmp/pulse-pnpm-install.log\n试运行: cd frontend && pnpm install"
+    fi
+else
+    success "前端依赖已安装(跳过)"
 fi
-success "前端依赖 ✓"
 cd ..
 
 # ========================================
