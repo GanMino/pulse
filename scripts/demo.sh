@@ -34,12 +34,12 @@ setup_go_proxy() {
     # 测试 goproxy.cn 可用性
     if curl -sS --max-time 3 -o /dev/null -w "%{http_code}" https://goproxy.cn/github.com/!wailsapp/wails/v2/@v/list 2>/dev/null | grep -q "200"; then
         export GOPROXY=https://goproxy.cn,direct
-        export GOSUMDB=sum.golang.google.cn
-        success "使用国内代理 (goproxy.cn)"
+        export GOSUMDB=off  # 关闭 sumdb(Google 服务从大陆访问可能超时)
+        success "使用国内代理 (goproxy.cn, 关闭 sumdb)"
     else
         export GOPROXY=https://proxy.golang.org,direct
-        export GOSUMDB=sum.golang.google.cn
-        success "使用国际代理 (proxy.golang.org)"
+        export GOSUMDB=off  # 关闭 sumdb(部分环境访问 Google 服务慢)
+        success "使用国际代理 (proxy.golang.org, 关闭 sumdb)"
     fi
 }
 
