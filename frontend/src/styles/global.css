@@ -1,0 +1,64 @@
+:root {
+  /* Pulse Design Tokens - Dark Theme (Default) */
+  --primary: #3370FF;
+  --primary-hover: #4080FF;
+  --primary-active: #2960E6;
+  --primary-bg: rgba(51, 112, 255, 0.1);
+
+  --success: #52C41A;
+  --warning: #FAAD14;
+  --error: #FF4D4F;
+  --info: #13C2C2;
+
+  --bg-base: #0F0F0F;
+  --bg-elevated: #1A1A1A;
+  --bg-hover: #252525;
+  --bg-active: #2F2F2F;
+  --border: #2A2A2A;
+  --border-strong: #3A3A3A;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --text-tertiary: #6B6B6B;
+
+  --font-sans: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Menlo', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+[data-theme="light"] {
+  --bg-base: #FFFFFF;
+  --bg-elevated: #F8F8F8;
+  --bg-hover: #EFEFEF;
+  --bg-active: #E5E5E5;
+  --border: #E5E5E5;
+  --border-strong: #D5D5D5;
+  --text-primary: #1A1A1A;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}

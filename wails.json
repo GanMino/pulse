@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "pulse",
+  "outputfilename": "pulse",
+  "frontend:install": "pnpm install",
+  "frontend:build": "pnpm build",
+  "frontend:dev:watcher": "pnpm dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "Pulse Contributors",
+    "email": "team@pulse.dev"
+  },
+  "info": {
+    "productName": "Pulse",
+    "productVersion": "0.1.0",
+    "copyright": "Copyright © 2024 Pulse Contributors",
+    "comments": "Modern open-source load testing tool"
+  }
+}

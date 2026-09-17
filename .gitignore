@@ -1,0 +1,158 @@
+# ============================================
+# Pulse .gitignore
+# ============================================
+
+# ============================================
+# 构建产物
+# ============================================
+
+# Go 构建产物
+*.exe
+*.exe~
+*.dll
+*.dylib
+*.so
+*.dmg
+*.pkg
+*.msi
+*.deb
+*.rpm
+*.AppImage
+*.app/
+
+# Go workspace
+go.work
+go.work.sum
+
+# Wails 构建
+build/bin/
+
+# 前端构建
+frontend/dist/
+frontend/.vite/
+
+# ============================================
+# 依赖
+# ============================================
+
+# Node modules
+node_modules/
+
+# Go modules cache
+vendor/
+
+# ============================================
+# 环境与配置
+# ============================================
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ============================================
+# 运行时数据(用户数据)
+# ============================================
+
+# Pulse 数据目录
+data/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.duckdb
+*.duckdb.wal
+
+# 日志
+logs/
+*.log
+pulse.log
+
+# 报告
+reports/
+*.html
+
+# ============================================
+# 临时与缓存
+# ============================================
+
+# 测试覆盖
+coverage.out
+coverage.html
+*.test
+*.out
+
+# Go 测试
+*.prof
+cpu.prof
+mem.prof
+trace.out
+
+# 临时文件
+tmp/
+temp/
+.tmp/
+
+# ============================================
+# 文档构建
+# ============================================
+
+# VitePress
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# MkDocs
+site/
+
+# ============================================
+# 其他
+# ============================================
+
+# Wails 自动生成的 JS 绑定 - 由 wails dev/build 自动生成
+# 但保留占位文件(stub),方便首次 clone 后能直接 pnpm install
+# wails dev 时会自动覆盖
+frontend/wailsjs/runtime/runtime.js
+frontend/wailsjs/go/
+# 但保留 README(说明文档)
+!frontend/wailsjs/README.md
+
+# 备份
+*.bak
+*.swp
+*.orig
+*.rej
+
+# macOS 特定
+__MACOSX/
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+
+# Linux 特定
+.directory
+.Trash-*
+.fuse_hidden*
+
+# Windows 特定
+$RECYCLE.BIN/
+*.lnk
