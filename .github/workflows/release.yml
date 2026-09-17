@@ -16,21 +16,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS 通用二进制(Intel + Apple Silicon)
           - os: macos-latest
             platform: darwin/universal
             artifact_name: pulse-macos-universal
             binary_path: pulse.app
             archive_format: tar.gz
 
-          # Windows x64
           - os: windows-latest
             platform: windows/amd64
             artifact_name: pulse-windows-amd64
             binary_path: pulse.exe
             archive_format: zip
 
-          # Linux x64
           - os: ubuntu-latest
             platform: linux/amd64
             artifact_name: pulse-linux-amd64
@@ -45,7 +42,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-          cache: true
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -74,24 +70,15 @@ jobs:
 
       - name: Verify binary
         run: |
-          ls -la build/bin/${{ matrix.binary_path }}
-          test -f build/bin/${{ matrix.binary_path }} || (echo "❌ Binary not found" && exit 1)
-          file build/bin/${{ matrix.binary_path }} || true
+          ls -la build/bin/${{ matrix.binary_path }} || (echo "❌ Binary not found" && exit 1)
 
-      - name: Get version
-        id: version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "→ Building version: $VERSION"
-
-      - name: Archive binary
+      - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: build/bin/${{ matrix.binary_path }}
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
 
   publish:
     name: Publish GitHub Release
@@ -107,7 +94,6 @@ jobs:
         run: |
           echo "=== Downloaded artifacts ==="
           find artifacts -type f | sort
-          echo ""
 
       - name: Create checksums
         run: |
@@ -122,8 +108,6 @@ jobs:
           files: |
             artifacts/**/*
             artifacts/SHA256SUMS.txt
-          draft: false
-          prerelease: false
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
