@@ -22,6 +22,30 @@ warn() { echo -e "${YELLOW}[!]${NC} $1"; }
 error() { echo -e "${RED}[✗]${NC} $1"; exit 1; }
 header() { echo -e "${CYAN}$1${NC}"; }
 
+# ==========================================
+# 网络优化:配置 Go 模块代理
+# 国内用户: goproxy.cn 可用
+# 海外用户: proxy.golang.org 可用
+# 自动检测: 先尝试 goproxy.cn,失败则降级
+# ==========================================
+setup_go_proxy() {
+    info "配置 Go 模块代理..."
+
+    # 测试 goproxy.cn 可用性
+    if curl -sS --max-time 3 -o /dev/null -w "%{http_code}" https://goproxy.cn/github.com/!wailsapp/wails/v2/@v/list 2>/dev/null | grep -q "200"; then
+        export GOPROXY=https://goproxy.cn,direct
+        export GOSUMDB=sum.golang.google.cn
+        success "使用国内代理 (goproxy.cn)"
+    else
+        export GOPROXY=https://proxy.golang.org,direct
+        export GOSUMDB=sum.golang.google.cn
+        success "使用国际代理 (proxy.golang.org)"
+    fi
+}
+
+# 立即配置
+setup_go_proxy
+
 # 路径
 PULSE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PULSE_DIR"
@@ -38,9 +62,26 @@ header ""
 # ========================================
 info "Step 1/5:检查环境..."
 
+# 配置 Go PATH
+if ! command -v go &> /dev/null; then
+    if [ -d "/usr/local/go/bin" ]; then
+        export PATH=$PATH:/usr/local/go/bin
+        if [ -d "$HOME/go/bin" ]; then
+            export PATH=$PATH:$HOME/go/bin
+        fi
+    fi
+fi
+
 command -v go &> /dev/null || error "Go 未安装。访问 https://go.dev/dl/ 安装"
 GO_VERSION=$(go version | awk '{print $3}' | sed 's/go//')
 success "Go $GO_VERSION ✓"
+
+# 检查 Go 版本是否满足最低要求
+GO_MAJOR=$(echo $GO_VERSION | cut -d. -f1)
+GO_MINOR=$(echo $GO_VERSION | cut -d. -f2)
+if [ "$GO_MAJOR" -lt 1 ] || ([ "$GO_MAJOR" -eq 1 ] && [ "$GO_MINOR" -lt 22 ]); then
+    error "Go 版本过低,需要 1.22+ (当前 $GO_VERSION)"
+fi
 
 command -v node &> /dev/null || error "Node.js 未安装"
 NODE_VERSION=$(node --version)
@@ -48,16 +89,30 @@ success "Node.js $NODE_VERSION ✓"
 
 command -v pnpm &> /dev/null || {
     warn "pnpm 未安装,尝试自动安装..."
-    npm install -g pnpm@9 || error "pnpm 安装失败"
+    npm install -g pnpm@9 || warn "pnpm 安装失败,可手动安装: npm i -g pnpm"
 }
-PNPM_VERSION=$(pnpm --version)
-success "pnpm $PNPM_VERSION ✓"
+if command -v pnpm &> /dev/null; then
+    PNPM_VERSION=$(pnpm --version)
+    success "pnpm $PNPM_VERSION ✓"
+fi
 
-command -v wails &> /dev/null || {
+# 配置 Go env(持久)
+go env -w GOPROXY="$GOPROXY" 2>/dev/null || true
+go env -w GOSUMDB="$GOSUMDB" 2>/dev/null || true
+
+# 检查 Wails
+if ! command -v wails &> /dev/null; then
+    if [ -f "$HOME/go/bin/wails" ]; then
+        export PATH=$PATH:$HOME/go/bin
+    fi
+fi
+
+if ! command -v wails &> /dev/null; then
     warn "Wails CLI 未安装,尝试自动安装..."
     go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.1 || error "Wails 安装失败"
+    export PATH=$PATH:$(go env GOPATH)/bin
     success "Wails 已安装"
-}
+fi
 WAILS_VERSION=$(wails version 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)
 success "Wails $WAILS_VERSION ✓"
 
@@ -67,8 +122,18 @@ success "Wails $WAILS_VERSION ✓"
 info ""
 info "Step 2/5:安装依赖..."
 
-go mod download
-success "Go 依赖 ✓"
+# 先尝试 go mod tidy(更智能)
+if go mod tidy 2>&1 | tee /tmp/pulse-mod-tidy.log; then
+    success "Go 依赖 (go mod tidy) ✓"
+else
+    # 退化到 go mod download
+    warn "go mod tidy 失败,尝试 go mod download..."
+    if go mod download 2>&1 | tee /tmp/pulse-mod-download.log; then
+        success "Go 依赖 (go mod download) ✓"
+    else
+        error "Go 依赖安装失败。请检查网络,或将 GOPROXY 设置为 https://goproxy.cn,direct"
+    fi
+fi
 
 cd frontend
 if [ ! -d "node_modules" ]; then
@@ -88,7 +153,6 @@ mkdir -p "$DB_DIR"
 DB_PATH="${DB_DIR}/pulse.db"
 
 if [ ! -f "$DB_PATH" ]; then
-    # 数据库尚未创建,提示用户先启动一次
     info "数据库未初始化,启动后将自动创建"
 fi
 

@@ -155,4 +155,4 @@ __MACOSX/
 
 # Windows 特定
 $RECYCLE.BIN/
-*.lnk
+*.lnk.ssh/

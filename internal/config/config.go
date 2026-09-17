@@ -32,9 +32,9 @@ type AppConfig struct {
 }
 
 // DatabaseConfig 数据库配置
+// 注:duckdb 是未来扩展,MVP 阶段只使用 SQLite
 type DatabaseConfig struct {
 	SQLitePath string `mapstructure:"sqlite_path"`
-	DuckDBPath  string `mapstructure:"duckdb_path"`
 }
 
 // EngineConfig 压测引擎配置
@@ -62,7 +62,6 @@ func Load() (*Config, error) {
 	v.SetDefault("app.log_level", "info")
 
 	v.SetDefault("database.sqlite_path", "${app.data_dir}/pulse.db")
-	v.SetDefault("database.duckdb_path", "${app.data_dir}/metrics.duckdb")
 
 	v.SetDefault("engine.max_vus", 20000)
 	v.SetDefault("engine.keep_alive", true)
